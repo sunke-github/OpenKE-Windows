@@ -5,4 +5,4 @@
 
 The code will be commin soon~
 
-![image](https://https://github.com/sunke-github/OpenKE-Windows/blob/main/results.png)
+![image](https://github.com/sunke-github/OpenKE-Windows/blob/main/results.png)
