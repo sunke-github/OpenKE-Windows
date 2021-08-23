@@ -5,4 +5,4 @@
 
 The code will be commin soon~
 
-![image](https://github.com/sunke-github/OpenKE-Windows/blob/OpenKE-PyTorch/results.png)
+![image](https://https://github.com/sunke-github/OpenKE-Windows/blob/main/results.png)
