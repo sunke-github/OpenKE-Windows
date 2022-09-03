@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .Model import Model
-
+import torchsnooper
 class TransE(Model):
 
 	def __init__(self, ent_tot, rel_tot, dim = 100, p_norm = 1, norm_flag = True, margin = None, epsilon = None):
@@ -58,7 +58,7 @@ class TransE(Model):
 			score = (h + r) - t
 		score = torch.norm(score, self.p_norm, -1).flatten()
 		return score
-
+# 	@torchsnooper.snoop()
 	def forward(self, data):
 		batch_h = data['batch_h']
 		batch_t = data['batch_t']

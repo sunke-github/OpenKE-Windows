@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from .Strategy import Strategy
 
 class NegativeSampling(Strategy):
@@ -17,16 +18,30 @@ class NegativeSampling(Strategy):
 
 	def _get_negative_score(self, score):
 		negative_score = score[self.batch_size:]
+		
+# 		tmp = negative_score.view(-1, self.batch_size)
+		
 		negative_score = negative_score.view(-1, self.batch_size).permute(1, 0)
 		return negative_score
-
+	
+		
 	def forward(self, data):
 		score = self.model(data)
 		p_score = self._get_positive_score(score)
+		
 		n_score = self._get_negative_score(score)
+		
 		loss_res = self.loss(p_score, n_score)
 		if self.regul_rate != 0:
 			loss_res += self.regul_rate * self.model.regularization(data)
 		if self.l3_regul_rate != 0:
 			loss_res += self.l3_regul_rate * self.model.l3_regularization()
 		return loss_res
+	
+	
+# 	get positive scores  2021-10-16
+	def get_scores(self,data):
+		score = self.model(data)
+		p_scores = self._get_positive_score(score)
+		p_scores = p_scores.cpu().detach().numpy()
+		return p_scores.flatten()

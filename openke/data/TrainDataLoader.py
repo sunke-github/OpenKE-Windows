@@ -2,6 +2,8 @@
 import os
 import ctypes
 import numpy as np
+import platform
+
 
 class TrainDataSampler(object):
 
@@ -37,8 +39,13 @@ class TrainDataLoader(object):
 		filter_flag = True,
 		neg_ent = 1,
 		neg_rel = 0):
-		
-		base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.dll"))
+	
+		sys = platform.system().lower()
+		if sys == "windows":
+			base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.dll"))
+		elif sys == "linux":
+			base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.so"))
+
 		self.lib = ctypes.cdll.LoadLibrary(base_file)
 		"""argtypes"""
 		self.lib.sampling.argtypes = [
@@ -54,6 +61,7 @@ class TrainDataLoader(object):
 			ctypes.c_int64,
 			ctypes.c_int64
 		]
+	
 		self.in_path = in_path
 		self.tri_file = tri_file
 		self.ent_file = ent_file
@@ -72,6 +80,8 @@ class TrainDataLoader(object):
 		self.negative_rel = neg_rel
 		self.sampling_mode = sampling_mode
 		self.cross_sampling_flag = 0
+		
+		self.lib.getTypeLength()      #2021
 		self.read()
 
 	def read(self):
@@ -96,9 +106,11 @@ class TrainDataLoader(object):
 			self.nbatches = self.tripleTotal // self.batch_size
 		self.batch_seq_size = self.batch_size * (1 + self.negative_ent + self.negative_rel)
 
-		self.batch_h = np.zeros(self.batch_seq_size, dtype=np.int32)   #  2021-8-12   in64-->in32
-		self.batch_t = np.zeros(self.batch_seq_size, dtype=np.int32)   #
-		self.batch_r = np.zeros(self.batch_seq_size, dtype=np.int32)   #
+		self.batch_h = np.zeros(self.batch_seq_size, dtype=np.int64)   
+		self.batch_t = np.zeros(self.batch_seq_size, dtype=np.int64)   
+		self.batch_r = np.zeros(self.batch_seq_size, dtype=np.int64)   
+		
+		
 		self.batch_y = np.zeros(self.batch_seq_size, dtype=np.float32)
 		self.batch_h_addr = self.batch_h.__array_interface__["data"][0]
 		self.batch_t_addr = self.batch_t.__array_interface__["data"][0]

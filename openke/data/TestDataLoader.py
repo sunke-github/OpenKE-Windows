@@ -3,6 +3,8 @@ import os
 import ctypes
 import numpy as np
 
+import platform
+
 class TestDataSampler(object):
 
 	def __init__(self, data_total, data_sampler):
@@ -25,7 +27,12 @@ class TestDataSampler(object):
 class TestDataLoader(object):
 
 	def __init__(self, in_path = "./", sampling_mode = 'link', type_constrain = True):
-		base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.dll"))
+		sys = platform.system().lower()
+		if sys == "windows":
+			base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.dll"))
+		elif sys == "linux":
+			base_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../release/Base.so"))
+
 		self.lib = ctypes.cdll.LoadLibrary(base_file)
 		"""for link prediction"""
 		self.lib.getHeadBatch.argtypes = [
@@ -64,23 +71,27 @@ class TestDataLoader(object):
 		self.relTotal = self.lib.getRelationTotal()
 		self.entTotal = self.lib.getEntityTotal()
 		self.testTotal = self.lib.getTestTotal()
-
-		self.test_h = np.zeros(self.entTotal, dtype=np.int32)      #2021-8-12   int64 --> in32
-		self.test_t = np.zeros(self.entTotal, dtype=np.int32)
-		self.test_r = np.zeros(self.entTotal, dtype=np.int32)
+		
+		self.test_h = np.zeros(self.entTotal, dtype=np.int64)     
+		self.test_t = np.zeros(self.entTotal, dtype=np.int64)      
+		self.test_r = np.zeros(self.entTotal, dtype=np.int64)      
+	
 		self.test_h_addr = self.test_h.__array_interface__["data"][0]
 		self.test_t_addr = self.test_t.__array_interface__["data"][0]
 		self.test_r_addr = self.test_r.__array_interface__["data"][0]
 
-		self.test_pos_h = np.zeros(self.testTotal, dtype=np.int32)  #2021-8-12   int64 --> in32
-		self.test_pos_t = np.zeros(self.testTotal, dtype=np.int32)
-		self.test_pos_r = np.zeros(self.testTotal, dtype=np.int32)
+		self.test_pos_h = np.zeros(self.testTotal, dtype=np.int64)  
+		self.test_pos_t = np.zeros(self.testTotal, dtype=np.int64)  
+		self.test_pos_r = np.zeros(self.testTotal, dtype=np.int64)  
+		
 		self.test_pos_h_addr = self.test_pos_h.__array_interface__["data"][0]
 		self.test_pos_t_addr = self.test_pos_t.__array_interface__["data"][0]
 		self.test_pos_r_addr = self.test_pos_r.__array_interface__["data"][0]
-		self.test_neg_h = np.zeros(self.testTotal, dtype=np.int32)   #2021-8-12   int64 --> in32
-		self.test_neg_t = np.zeros(self.testTotal, dtype=np.int32) 
-		self.test_neg_r = np.zeros(self.testTotal, dtype=np.int32)
+		
+		self.test_neg_h = np.zeros(self.testTotal, dtype=np.int64)   
+		self.test_neg_t = np.zeros(self.testTotal, dtype=np.int64)  
+		self.test_neg_r = np.zeros(self.testTotal, dtype=np.int64)   
+		
 		self.test_neg_h_addr = self.test_neg_h.__array_interface__["data"][0]
 		self.test_neg_t_addr = self.test_neg_t.__array_interface__["data"][0]
 		self.test_neg_r_addr = self.test_neg_r.__array_interface__["data"][0]

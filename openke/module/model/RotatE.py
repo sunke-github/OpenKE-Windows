@@ -2,6 +2,10 @@ import torch
 import torch.autograd as autograd
 import torch.nn as nn
 from .Model import Model
+import torchsnooper
+import torch.nn.functional as F
+
+
 
 class RotatE(Model):
 
@@ -22,6 +26,7 @@ class RotatE(Model):
 			requires_grad=False
 		)
 
+
 		nn.init.uniform_(
 			tensor = self.ent_embeddings.weight.data, 
 			a=-self.ent_embedding_range.item(), 
@@ -41,40 +46,49 @@ class RotatE(Model):
 
 		self.margin = nn.Parameter(torch.Tensor([margin]))
 		self.margin.requires_grad = False
+		
 
+	
+
+		
+# 	@torchsnooper.snoop()
 	def _calc(self, h, t, r, mode):
 		pi = self.pi_const
-
-		re_head, im_head = torch.chunk(h, 2, dim=-1)
-		re_tail, im_tail = torch.chunk(t, 2, dim=-1)
-
+		#实部分和虚部, real number,  imaginary number 
+		re_h, im_h = torch.chunk(h, 2, dim=-1)
+		re_t, im_t = torch.chunk(t, 2, dim=-1)
+		#Make phases of relations uniformly distributed in [-pi, pi]
 		phase_relation = r / (self.rel_embedding_range.item() / pi)
 
-		re_relation = torch.cos(phase_relation)
-		im_relation = torch.sin(phase_relation)
+		re_relation = torch.cos(phase_relation)    #real number
+		im_relation = torch.sin(phase_relation)    #imaginary number
 
-		re_head = re_head.view(-1, re_relation.shape[0], re_head.shape[-1]).permute(1, 0, 2)
-		re_tail = re_tail.view(-1, re_relation.shape[0], re_tail.shape[-1]).permute(1, 0, 2)
-		im_head = im_head.view(-1, re_relation.shape[0], im_head.shape[-1]).permute(1, 0, 2)
-		im_tail = im_tail.view(-1, re_relation.shape[0], im_tail.shape[-1]).permute(1, 0, 2)
+		
+		#数据变换未做运算，原算法无这部分操作
+		re_h = re_h.view(-1, re_relation.shape[0], re_h.shape[-1]).permute(1, 0, 2)  
+		re_t = re_t.view(-1, re_relation.shape[0], re_t.shape[-1]).permute(1, 0, 2)
+		im_h = im_h.view(-1, re_relation.shape[0], im_h.shape[-1]).permute(1, 0, 2)
+		im_t = im_t.view(-1, re_relation.shape[0], im_t.shape[-1]).permute(1, 0, 2)
 		im_relation = im_relation.view(-1, re_relation.shape[0], im_relation.shape[-1]).permute(1, 0, 2)
 		re_relation = re_relation.view(-1, re_relation.shape[0], re_relation.shape[-1]).permute(1, 0, 2)
-
+		
+		
 		if mode == "head_batch":
-			re_score = re_relation * re_tail + im_relation * im_tail
-			im_score = re_relation * im_tail - im_relation * re_tail
-			re_score = re_score - re_head
-			im_score = im_score - im_head
+			re_score = re_relation * re_t + im_relation * im_t
+			im_score = re_relation * im_t - im_relation * re_t
+			re_score = re_score - re_h
+			im_score = im_score - im_h
 		else:
-			re_score = re_head * re_relation - im_head * im_relation
-			im_score = re_head * im_relation + im_head * re_relation
-			re_score = re_score - re_tail
-			im_score = im_score - im_tail
-
+			re_score = re_h * re_relation - im_h * im_relation   #弄清这里的矩阵运算   element-wise
+			im_score = re_h * im_relation + im_h * re_relation
+			re_score = re_score - re_t
+			im_score = im_score - im_t
+		# score 包含了 positive score 和 negative score.
 		score = torch.stack([re_score, im_score], dim = 0)
 		score = score.norm(dim = 0).sum(dim = -1)
+		
 		return score.permute(1, 0).flatten()
-
+	
 	def forward(self, data):
 		batch_h = data['batch_h']
 		batch_t = data['batch_t']
@@ -83,6 +97,7 @@ class RotatE(Model):
 		h = self.ent_embeddings(batch_h)
 		t = self.ent_embeddings(batch_t)
 		r = self.rel_embeddings(batch_r)
+		
 		score = self.margin - self._calc(h ,t, r, mode)
 		return score
 
