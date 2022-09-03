@@ -13,14 +13,7 @@ from .RESCAL import RESCAL
 from .Analogy import Analogy
 from .SimplE import SimplE
 from .RotatE import RotatE
-from .RotatE_TransH import RotatE_TransH
-from .RotatE_TransR import RotatE_TransR
-from .RotatE_GEO import RotatE_GEO
-from .RotatE_DGL import RotatE_DGL
-from .RotatE_TransH_GEO import RotatE_TransH_GEO
-from .RotatE_TransH_DGL import RotatE_TransH_DGL
-from .RotatE_TransR_GEO import RotatE_TransR_GEO
-from .RotatE_TransR_DGL import RotatE_TransR_DGL
+
 
 
 __all__ = [
